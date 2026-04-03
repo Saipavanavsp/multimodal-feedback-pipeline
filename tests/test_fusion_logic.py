@@ -27,15 +27,15 @@ class TestTriageFusionEngine(unittest.TestCase):
         
         result = self.engine.calculate_priority_score(vis_data, text_data)
         
-        self.assertAlmostEqual(result["final_priority_score"], 4.0)
-        self.assertEqual(result["action"], "TRIGGER_P1_ALERT")
+        self.assertAlmostEqual(result["priority_score"], 4.0)
+        self.assertEqual(result["route"], "P1_ESCALATION")
 
     def test_priority_score_low(self):
         vis_data = {"damage_severity": 1}
         text_data = {"sentiment_severity": 2}
         
         result = self.engine.calculate_priority_score(vis_data, text_data)
-        self.assertEqual(result["action"], "LOG_TO_NOTION")
+        self.assertEqual(result["route"], "NORMAL_QUEUE")
 
 if __name__ == '__main__':
     unittest.main()
