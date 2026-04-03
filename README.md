@@ -1,6 +1,6 @@
 # Multimodal Customer Feedback Triage Pipeline
 
-**An n8n-based AI workflow that analyzes customer text feedback and product images to prioritize support escalations.**
+**n8n workflow for image + text based support escalation**
 
 ## 📖 Problem Solved
 Customer support teams currently rely on human agents to manually read through complaint emails and visually inspect photos of broken products. This project automates the triage process by combining text sentiment classification and image analysis to automatically route escalations, saving engineering hours and reducing return fraud.
