@@ -1,66 +1,102 @@
-# Multimodal Customer Feedback Triage Pipeline
+<div align="center">
+  <h1>🚀 Multimodal Customer Feedback Triage Pipeline</h1>
+  <p><b>An n8n-based AI workflow that analyzes customer text feedback and product images to prioritize support escalations.</b></p>
+  
+  [![n8n](https://img.shields.io/badge/n8n-Workflow_Automation-ff6600?style=for-the-badge&logo=n8n)](https://n8n.io/)
+  [![OpenAI](https://img.shields.io/badge/GPT--4o-Vision_&_Sentiment-412991?style=for-the-badge&logo=openai)](https://openai.com/)
+  [![Slack](https://img.shields.io/badge/Slack-Automated_Alerts-4A154B?style=for-the-badge&logo=slack)](https://slack.com/)
+</div>
 
-**An AI-assisted multimodal workflow that analyzes customer text feedback and product images to prioritize support escalations.**
+<br/>
 
-Traditionally, companies rely on human agents to manually read through customer emails and visually inspect photos of broken products to prioritize refunds. This project automates the triage workflow by evaluating unstructured data (Computer Vision + Natural Language Processing) and mathematically determining a priority score for escalation.
+## 📖 Overview
+Normally, companies rely on human agents to manually read through customer emails and visually inspect photos of broken products to prioritize refunds. This project automates the triage workflow by combining image analysis and text sentiment to automatically route support escalations.
+
+### Practical Value
+- **Saves Engineering Hours**: Automatically filters out minor issues into routine databases.
+- **Reduces Return Fraud**: Cross-references text claims (e.g., "It's shattered!") with actual visual evidence.
+- **Fine-Grained Sentiment Classification**: Categorizes feedback into a 5-level sentiment mapping to appropriately weight urgency.
+
+---
 
 ## 🏗️ Technical Architecture
 
-This repository bridges **n8n** (an open-source workflow engine) with a **Python ML service** backend.
+This repository bridges **n8n** (an open-source workflow engine) with a **Python** backend.
 
 **Triage Priority Scoring Algorithm:**
-Instead of simple boolean triggers, this pipeline relies on structured parsing to calculate a weighted urgency score:
+Instead of simple boolean triggers, this pipeline parses JSON from the GPT-4o Vision and Sentiment nodes to calculate a weighted urgency score:
 
 ```python
 priority_score = (0.5 * damage_severity) + (0.3 * sentiment_severity) + (0.2 * fraud_risk)
 ```
 *Scores `>= 3.5` trigger an immediate P1 Slack Alert. Lower scores are queued into Notion.*
 
-**Data Flow:**
-1. **The Input**: A simulated customer form provides `review_text` and an `image_url`.
-2. **The Visual Assessment**: A Vision node inspects the image for physical damage, outputting a severity rating (0-5). 
-3. **The Sentiment Assessment**: A NLP node reads the `review_text`, identifying frustration and mapping it to a severity rating (0-5).
-4. **Fraud Detection**: The python backend cross-references the text claims with the visual reality (e.g., "Shattered screen" vs pristine image) to assign a fraud risk severity.
-5. **Score Fusion**: The `fusion_logic.py` core calculates the final priority score.
-6. **The Action**: Triage routing to Slack or Database.
+---
+
+## 📊 Example Payload
+
+### A. Example Input
+```json
+{
+  "review_text": "The product arrived broken and unusable. I am extremely frustrated.",
+  "image_url": "https://example.com/damaged-item.jpg"
+}
+```
+
+### B. Example Output
+```json
+{
+  "defect_detected": true,
+  "defect_type": "screen crack",
+  "visual_evidence_score": 9,
+  "sentiment_label": "Very Negative",
+  "priority_score": 4.7,
+  "route": "P1 Slack Escalation"
+}
+```
+
+---
+
+## 🧠 Structured Output Schema
+The AI Nodes guarantee structured generation using the following JSON schema:
+```json
+{
+  "defect_detected": "boolean",
+  "defect_type": "string",
+  "visual_evidence_score": "integer",
+  "text_sentiment": "string",
+  "priority_score": "float"
+}
+```
+
+---
 
 ## 🚀 Repository Structure
 
 ```text
-├── README.md
-├── workflow.json                 # n8n Pipeline Export
+multimodal-feedback-pipeline/
 ├── app/
 │   ├── analyze_feedback.py       # Main orchestration script
 │   ├── fusion_logic.py           # Priority scoring algorithm
 │   ├── image_damage_checker.py   # Vision API interface
 │   ├── sentiment_classifier.py   # Text analysis interface
 │   └── sample_payloads.json      # Mock input/output examples
-└── tests/
-    └── test_fusion_logic.py      # Unit tests for threshold accuracy
+├── assets/
+│   ├── workflow-diagram.png      
+│   └── sample-alert.png         
+├── tests/
+│   └── test_fusion_logic.py      # Unit tests for scoring bounds
+├── workflow.json                 # n8n Pipeline Export
+└── README.md
 ```
 
-## 🧠 Sample Payload
-
-**Input parameters:**
-```json
-{
-  "image_url": "https://example.com/cracked_screen.jpg",
-  "review_text": "My phone arrived completely smashed and the screen is falling out. I demand a refund immediately!"
-}
-```
-
-**Fusion Output (Calculated via `app/fusion_logic.py`):**
-```json
-{
-  "damage_severity": 4, 
-  "sentiment_severity": 5, 
-  "fraud_risk": 0,
-  "final_priority_score": 3.5,
-  "action": "TRIGGER_P1_ALERT"
-}
-```
+## ⚠️ Limitations
+- **Image Quality Constraints:** Dependent on user-submitted photo lighting and resolution.
+- **Vision Model Variability:** LLM visual reasoning bounds are non-deterministic.
+- **No Benchmark Dataset:** Currently functional as a logic design pattern, not yet tuned on a production fraud dataset.
+- Designed as a structured workflow demonstration, not an end-to-end production model.
 
 ---
 <div align="center">
-  <i>Developed by <b>Sai pavan</b> for ML Engineering Portfolio Assessment</i>
+  <i>Developed by <b>Sai pavan</b></i>
 </div>
