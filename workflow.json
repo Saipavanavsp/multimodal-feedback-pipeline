@@ -1,0 +1,191 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "feedback-inbound",
+        "options": {}
+      },
+      "id": "1",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [ 100, 300 ],
+      "webhookId": "test-webhook"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.body.image_url }}",
+        "responseFormat": "file",
+        "options": {}
+      },
+      "id": "2",
+      "name": "Download Image",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [ 360, 160 ]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o",
+        "options": {},
+        "systemMessage": "Role: You are an AI Quality Assurance Inspector.\nContext: A customer has submitted a text review and a photo of a product they received.\nMission: \n1. Look at the image: Is there a functional or cosmetic defect?\n2. Read the text: How intense is the customer's frustration?\n3. Cross-Reference: Does the text claim match the visual evidence?\n\nOutput (Strict JSON):\n{\n\"defect_detected\": boolean,\n\"defect_type\": \"string\",\n\"visual_evidence_score\": 1-10,\n\"text_visual_alignment\": \"Match/Mismatch\",\n\"urgency_level\": \"Low/Medium/High\"\n}"
+      },
+      "id": "3",
+      "name": "Vision AI",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1,
+      "position": [ 580, 160 ]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o",
+        "options": {},
+        "prompt": "Analyze the following review: {{ $json.body.review_text }}. Categorize sentiment into EXACTLY ONE of these: Very Positive, Positive, Neutral, Negative, Very Negative.\n\nOutput only the exact string match, e.g. \"Very Negative\"."
+      },
+      "id": "4",
+      "name": "Sentiment AI",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1,
+      "position": [ 360, 440 ]
+    },
+    {
+      "parameters": {
+        "mode": "wait"
+      },
+      "id": "5",
+      "name": "Merge",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2,
+      "position": [ 820, 300 ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.defect_detected }}",
+              "value2": true
+            }
+          ],
+          "string": [
+            {
+              "value1": "={{ $json.sentiment_category }}",
+              "value2": "Very Negative"
+            }
+          ]
+        }
+      },
+      "id": "6",
+      "name": "IF Condition",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [ 1040, 300 ]
+    },
+    {
+      "parameters": {
+        "channel": "quality-control",
+        "text": "🚨 URGENT: Major defect detected. Customer is highly frustrated. Image evidence: {{ $json.image_url }}"
+      },
+      "id": "7",
+      "name": "Slack Alert",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2,
+      "position": [ 1280, 200 ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "databaseId": {
+          "__rl": true,
+          "value": "placeholder"
+        }
+      },
+      "id": "8",
+      "name": "Notion Database",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2,
+      "position": [ 1280, 420 ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Download Image",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Sentiment AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Image": {
+      "main": [
+        [
+          {
+            "node": "Vision AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Vision AI": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sentiment AI": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "IF Condition",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Condition": {
+      "main": [
+        [
+          {
+            "node": "Slack Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notion Database",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
