@@ -1,77 +1,75 @@
-<div align="center">
-  <h1>🚀 Multimodal Customer Feedback Triage Pipeline</h1>
-  <p><b>An n8n-based AI workflow that analyzes customer text feedback and product images to prioritize support escalations.</b></p>
-  
-  [![n8n](https://img.shields.io/badge/n8n-Workflow_Automation-ff6600?style=for-the-badge&logo=n8n)](https://n8n.io/)
-  [![OpenAI](https://img.shields.io/badge/GPT--4o-Vision_&_Sentiment-412991?style=for-the-badge&logo=openai)](https://openai.com/)
-  [![Slack](https://img.shields.io/badge/Slack-Automated_Alerts-4A154B?style=for-the-badge&logo=slack)](https://slack.com/)
-</div>
+# Multimodal Customer Feedback Triage Pipeline
 
-<br/>
+**An n8n-based AI workflow that analyzes customer text feedback and product images to prioritize support escalations.**
 
-## 📖 Overview
-Normally, companies rely on human agents to manually read through customer emails and visually inspect photos of broken products to prioritize refunds. This project automates the triage workflow by combining image analysis and text sentiment to automatically route support escalations.
-
-### Practical Value
-- **Saves Engineering Hours**: Automatically filters out minor issues into routine databases.
-- **Reduces Return Fraud**: Cross-references text claims (e.g., "It's shattered!") with actual visual evidence.
-- **Fine-Grained Sentiment Classification**: Categorizes feedback into a 5-level sentiment mapping to appropriately weight urgency.
+## 📖 Problem Solved
+Customer support teams currently rely on human agents to manually read through complaint emails and visually inspect photos of broken products. This project automates the triage process by combining text sentiment classification and image analysis to automatically route escalations, saving engineering hours and reducing return fraud.
 
 ---
 
-## 🏗️ Technical Architecture
+## 🏗️ Technical Architecture & Logic
 
-This repository bridges **n8n** (an open-source workflow engine) with a **Python** backend.
+This repository bridges **n8n** (workflow orchestration) with a Python-based scoring backend.
 
-**Triage Priority Scoring Algorithm:**
-Instead of simple boolean triggers, this pipeline parses JSON from the GPT-4o Vision and Sentiment nodes to calculate a weighted urgency score:
+**Priority Scoring Engine:**
+The pipeline parses JSON from the Vision and Sentiment models to calculate a weighted urgency score:
 
 ```python
-priority_score = 0.5 * damage_score + 0.3 * sentiment_score + 0.2 * claim_alignment_score
+priority_score = (0.5 * damage_score) + (0.3 * sentiment_score) + (0.2 * claim_match_score)
 ```
 
 **Routing Rules:**
-- `>= 4.0` → P1 Escalation
-- `>= 2.5` → P2 Escalation
-- `else` → Normal Queue
+- `>= 4.0` → **P1 Escalation** (Sent to Slack)
+- `2.5 to 3.9` → **P2 Escalation** (Sent to Slack)
+- `< 2.5` → **Routine queue** (Logged to Notion/Database)
 
 ---
 
-## 📊 Example Payload
+## 📊 Sample Payloads
 
-### A. Example Input
+**Sample Input**
 ```json
 {
-  "review_text": "The product arrived broken and unusable. I am extremely frustrated.",
+  "review_text": "The product arrived broken and unusable.",
   "image_url": "https://example.com/damaged-item.jpg"
 }
 ```
 
-### B. Example Output
+**Sample Output**
 ```json
 {
   "defect_detected": true,
   "defect_type": "screen crack",
   "visual_evidence_score": 9,
   "sentiment_label": "Very Negative",
+  "claim_match_score": 4,
   "priority_score": 4.7,
+  "route": "P1 Slack Escalation"
+}
+```
+
+**Structured Output Schema**
+```json
+{
+  "defect_detected": true,
+  "defect_type": "cracked_screen",
+  "visual_evidence_score": 8,
+  "sentiment_label": "Very Negative",
+  "priority_score": 4.6,
   "route": "P1 Slack Escalation"
 }
 ```
 
 ---
 
-## 🧠 Structured Output Schema
-The AI Nodes guarantee structured generation using the following JSON schema:
-```json
-{
-  "defect_detected": "boolean",
-  "defect_type": "string",
-  "visual_evidence_score": "integer",
-  "text_sentiment": "string",
-  "priority_score": "float"
-}
-```
+## 📈 Evaluation & Metrics
+A baseline evaluation of the logic model on simulated edge cases:
+
+| Test Case | Expected | Output | Result |
+| :--- | :--- | :--- | :--- |
+| Broken item + angry review | P1 | P1 | Pass |
+| Minor scratch + neutral review | P2 | P2 | Pass |
+| No visible defect + negative review | Routine queue | Routine queue | Pass |
 
 ---
 
@@ -80,27 +78,40 @@ The AI Nodes guarantee structured generation using the following JSON schema:
 ```text
 multimodal-feedback-pipeline/
 ├── app/
-│   ├── analyze_feedback.py       # Main orchestration script
-│   ├── fusion_logic.py           # Priority scoring algorithm
-│   ├── image_damage_checker.py   # Vision API interface
-│   ├── sentiment_classifier.py   # Text analysis interface
-│   └── sample_payloads.json      # Mock input/output examples
+│   ├── fusion_logic.py           
+│   ├── schemas.py                
+│   ├── image_damage_checker.py   
+│   ├── sentiment_classifier.py   
+│   └── sample_payloads.json      
 ├── assets/
 │   ├── workflow-diagram.png      
-│   └── sample-alert.png         
+│   ├── n8n-workflow-screenshot.png
+│   ├── sample-json-output.png
+│   └── slack-alert-example.png         
 ├── tests/
-│   └── test_fusion_logic.py      # Unit tests for scoring bounds
-├── workflow.json                 # n8n Pipeline Export
-└── README.md
+│   └── test_fusion_logic.py      
+├── .env.example
+├── requirements.txt
+├── workflow.json                 
+├── README.md
+└── LICENSE
 ```
 
+---
+
 ## ⚠️ Limitations
-- **Image Quality Constraints:** Dependent on user-submitted photo lighting and resolution.
-- **Vision Model Variability:** LLM visual reasoning bounds are non-deterministic.
-- **No Benchmark Dataset:** Currently functional as a logic design pattern, not yet tuned on a production fraud dataset.
-- Designed as a structured workflow demonstration, not an end-to-end production model.
+- **Dependent on image quality and lighting**
+- **LLM vision outputs may vary across edge cases**
+- **No benchmark dataset yet for false positive/false negative measurement**
+- **Current version is a workflow prototype**, not a production fraud-detection system
+- **Rule thresholds are heuristic** and should be tuned with real support data
 
 ---
-<div align="center">
-  <i>Developed by <b>Sai pavan</b></i>
-</div>
+
+## 🔮 Future Improvements
+1. Replace rule-based routing with learned risk scoring trained on historical tickets.
+2. Add OCR extraction from invoice / warranty cards.
+3. Add specialized image-text contradiction detection patterns.
+4. Store outcomes in a relational database for root-cause analytics.
+5. Build a dashboard for escalation trends.
+6. Add confidence thresholds that route low-confidence AI decisions to a human-in-the-loop fallback queue.
