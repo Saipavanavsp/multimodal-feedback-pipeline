@@ -1,0 +1,17 @@
+[
+  {
+    "scenario": "Legitimate P1 Escalation",
+    "image_url": "https://example.com/cracked_screen.jpg",
+    "review_text": "My phone arrived completely smashed and the screen is falling out. I demand a refund immediately!"
+  },
+  {
+    "scenario": "Minor Complaint (No Damage)",
+    "image_url": "https://example.com/perfect_phone.jpg",
+    "review_text": "The phone is okay but the color is slightly different than the picture."
+  },
+  {
+    "scenario": "Potential Fraud",
+    "image_url": "https://example.com/perfect_phone.jpg",
+    "review_text": "The phone is entirely smashed and completely destroyed! This is unacceptable, I demand my money back right now!"
+  }
+]
