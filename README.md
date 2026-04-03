@@ -1,83 +1,66 @@
-<div align="center">
-  <h1>🚀 Multi-Modal Feedback Pipeline</h1>
-  <p><b>An AI-Powered Sensor Fusion Application for Automated Customer Support Escalations</b></p>
-  
-  [![n8n](https://img.shields.io/badge/n8n-Workflow_Automation-ff6600?style=for-the-badge&logo=n8n)](https://n8n.io/)
-  [![OpenAI](https://img.shields.io/badge/GPT--4o-Vision_&_Sentiment-412991?style=for-the-badge&logo=openai)](https://openai.com/)
-  [![Slack](https://img.shields.io/badge/Slack-Automated_Alerts-4A154B?style=for-the-badge&logo=slack)](https://slack.com/)
-</div>
+# Multimodal Customer Feedback Triage Pipeline
 
-<br/>
+**An AI-assisted multimodal workflow that analyzes customer text feedback and product images to prioritize support escalations.**
 
-## 📖 Executive Summary
-Traditionally, companies rely on human agents to manually read through customer emails and visually inspect photos of broken products to prioritize refunds. This traditional process is slow, prone to bias, and vulnerable to return fraud.
-
-This project **automates the triage workflow** by implementing **Sensor Fusion**: it combines Computer Vision (evaluating photo evidence) and Natural Language Processing (assessing text sentiment) to automatically trigger priority escalations.
-
-### 💡 The Value Proposition
-- **Saves Hundreds of Hours**: Automatically filters out minor issues into routine databases.
-- **Prevents Refund Fraud**: Cross-references text claims (e.g., "It's shattered!") with actual visual evidence.
-- **Micro-Targeted Sentiment**: Categorizes feedback into 5 granular emotional brackets, far superior to basic positive/negative mapping.
-
----
+Traditionally, companies rely on human agents to manually read through customer emails and visually inspect photos of broken products to prioritize refunds. This project automates the triage workflow by evaluating unstructured data (Computer Vision + Natural Language Processing) and mathematically determining a priority score for escalation.
 
 ## 🏗️ Technical Architecture
 
-Built purely with **n8n** (an open-source workflow engine), this pipeline connects raw inbound webhooks directly to specialized AI agents.
+This repository bridges **n8n** (an open-source workflow engine) with a **Python ML service** backend.
+
+**Triage Priority Scoring Algorithm:**
+Instead of simple boolean triggers, this pipeline relies on structured parsing to calculate a weighted urgency score:
+
+```python
+priority_score = (0.5 * damage_severity) + (0.3 * sentiment_severity) + (0.2 * fraud_risk)
+```
+*Scores `>= 3.5` trigger an immediate P1 Slack Alert. Lower scores are queued into Notion.*
 
 **Data Flow:**
-1. **The Input (Webhook)**: A simulated web form submission (`POST` request) supplies two parameters: `review_text` and `image_url`.
-2. **Data Extraction**: An HTTP Request node converts the image URL into a binary stream, allowing the Vision model to "see" it without hosting constraints.
-3. **The Visual Check**: A `GPT-4o` Vision Node inspects the image for physical damage and returns a strict JSON payload.
-4. **The Emotional Check**: A specialized Sentiment node reads the `review_text`, mapping the frustration level into 5 granular brackets (`Very Positive`, `Positive`, `Neutral`, `Negative`, `Very Negative`).
-5. **Sensor Fusion (Merge)**: A Merge node synchronizes the data streams, combining the visual assessment JSON with the emotional assessment JSON.
-6. **The Action (IF Routing)**: If `Damage == True` AND `Emotion == Very Negative`, the system instantly triggers a **Priority 1 (P1) Slack Alert** to the Quality Control team. Otherwise, it logs to Notion for routine review.
+1. **The Input**: A simulated customer form provides `review_text` and an `image_url`.
+2. **The Visual Assessment**: A Vision node inspects the image for physical damage, outputting a severity rating (0-5). 
+3. **The Sentiment Assessment**: A NLP node reads the `review_text`, identifying frustration and mapping it to a severity rating (0-5).
+4. **Fraud Detection**: The python backend cross-references the text claims with the visual reality (e.g., "Shattered screen" vs pristine image) to assign a fraud risk severity.
+5. **Score Fusion**: The `fusion_logic.py` core calculates the final priority score.
+6. **The Action**: Triage routing to Slack or Database.
 
----
+## 🚀 Repository Structure
 
-## 🚀 Setup & Installation (Import Guide)
+```text
+├── README.md
+├── workflow.json                 # n8n Pipeline Export
+├── app/
+│   ├── analyze_feedback.py       # Main orchestration script
+│   ├── fusion_logic.py           # Priority scoring algorithm
+│   ├── image_damage_checker.py   # Vision API interface
+│   ├── sentiment_classifier.py   # Text analysis interface
+│   └── sample_payloads.json      # Mock input/output examples
+└── tests/
+    └── test_fusion_logic.py      # Unit tests for threshold accuracy
+```
 
-This repository includes the raw JSON structure required to deploy the exact node architecture used in this pipeline.
+## 🧠 Sample Payload
 
-### Prerequisites
-- An active [n8n](https://n8n.io/) instance (Cloud or Self-Hosted).
-- An OpenAI API Key (with GPT-4o access).
-- A Slack Workspace (for testing the webhooks/alerts).
-
-### Instructions
-1. Download or copy the contents of `workflow.json` located in this repository.
-2. Open your n8n workspace, navigate to the workflows canvas, and select **Import from File** (or simply paste the JSON over the canvas).
-3. Open the **Vision AI** and **Sentiment AI** nodes to link your OpenAI credentials.
-4. Open the **Slack** node to link your workspace token and select a target channel.
-5. Save and Activate the workflow.
-6. Use an API client (like Postman) to send a `POST` request to your Webhook Test URL containing sample `image_url` and `review_text` values.
-
----
-
-## 🧠 System Prompts Used
-
-This project uses rigorous prompt engineering to guarantee structured JSON outputs suitable for computational branching.
-
-### The Master Vision Assessor Prompt
+**Input parameters:**
 ```json
-Role: You are an AI Quality Assurance Inspector.
-Context: A customer submitted a text review and a photo of a product.
-Mission: 
-1. Image check: Is there a functional or cosmetic defect?
-2. Text check: How intense is the customer's frustration?
-3. Cross-Reference: Does the text claim match the visual evidence?
-
-Output as Strict JSON:
 {
-  "defect_detected": true,
-  "defect_type": "string",
-  "visual_evidence_score": 10, 
-  "text_visual_alignment": "Match",
-  "urgency_level": "High"
+  "image_url": "https://example.com/cracked_screen.jpg",
+  "review_text": "My phone arrived completely smashed and the screen is falling out. I demand a refund immediately!"
+}
+```
+
+**Fusion Output (Calculated via `app/fusion_logic.py`):**
+```json
+{
+  "damage_severity": 4, 
+  "sentiment_severity": 5, 
+  "fraud_risk": 0,
+  "final_priority_score": 3.5,
+  "action": "TRIGGER_P1_ALERT"
 }
 ```
 
 ---
 <div align="center">
-  <i>Developed by <b>Sai pavan</b> for AI/ML Portfolio Assessment</i>
+  <i>Developed by <b>Sai pavan</b> for ML Engineering Portfolio Assessment</i>
 </div>
