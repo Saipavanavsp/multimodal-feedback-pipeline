@@ -11,37 +11,24 @@ class TestTriageFusionEngine(unittest.TestCase):
     def setUp(self):
         self.engine = TriageFusionEngine()
 
-    def test_fraud_risk_high(self):
+    def test_claim_alignment_high(self):
         # 0 damage but extremely angry
-        risk = self.engine.assess_fraud_risk(damage_severity=0, sentiment_severity=5)
+        risk = self.engine.assess_claim_alignment(damage_severity=0, sentiment_severity=5)
         self.assertEqual(risk, 5)
 
-    def test_fraud_risk_low(self):
-        # High damage, high anger - makes sense, low risk of fraud
-        risk = self.engine.assess_fraud_risk(damage_severity=4, sentiment_severity=5)
+    def test_claim_alignment_low(self):
+        # High damage, high anger - makes sense, low risk of mismatch
+        risk = self.engine.assess_claim_alignment(damage_severity=4, sentiment_severity=5)
         self.assertEqual(risk, 0)
         
     def test_priority_score_p1_alert(self):
         vis_data = {"damage_severity": 5}
         text_data = {"sentiment_severity": 5}
-        # priority = (0.5 * 5) + (0.3 * 5) + (0.2 * 0) = 2.5 + 1.5 = 4.0
         
         result = self.engine.calculate_priority_score(vis_data, text_data)
         
         self.assertAlmostEqual(result["final_priority_score"], 4.0)
         self.assertEqual(result["action"], "TRIGGER_P1_ALERT")
-
-    def test_priority_score_fraud_review(self):
-        vis_data = {"damage_severity": 0}
-        text_data = {"sentiment_severity": 5}
-        # Fraud risk = 5
-        # priority = (0.5 * 0) + (0.3 * 5) + (0.2 * 5) = 1.5 + 1.0 = 2.5
-        # Wait, priority here is 2.5. 2.5 is < 3.5. So it will route to LOG_TO_NOTION.
-        
-        # In our logic: priority_score >= 3.5 is needed for FRAUD review or P1 alert.
-        # But if damage is 2, sentiment 5 (fraud risk = 3? wait, fraud logic says damage <= 1 and sentiment >=3 returns 3).
-        # Let's adjust inputs to trigger priority >= 3.5 and fraud >= 4.
-        pass
 
     def test_priority_score_low(self):
         vis_data = {"damage_severity": 1}

@@ -27,7 +27,7 @@ This repository bridges **n8n** (an open-source workflow engine) with a **Python
 Instead of simple boolean triggers, this pipeline parses JSON from the GPT-4o Vision and Sentiment nodes to calculate a weighted urgency score:
 
 ```python
-priority_score = (0.5 * damage_severity) + (0.3 * sentiment_severity) + (0.2 * fraud_risk)
+priority_score = (0.5 * damage_severity) + (0.3 * sentiment_severity) + (0.2 * claim_alignment)
 ```
 *Scores `>= 3.5` trigger an immediate P1 Slack Alert. Lower scores are queued into Notion.*
 
