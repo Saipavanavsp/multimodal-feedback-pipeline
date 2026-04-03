@@ -1,7 +1,7 @@
 [
   {
     "scenario": "Legitimate P1 Escalation",
-    "image_url": "https://example.com/cracked_screen.jpg",
+    "image_url": "https://raw.githubusercontent.com/Saipavanavsp/multimodal-feedback-pipeline/master/assets/cracked-phone-sample.png",
     "review_text": "My phone arrived completely smashed and the screen is falling out. I demand a refund immediately!"
   },
   {

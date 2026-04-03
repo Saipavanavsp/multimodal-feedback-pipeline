@@ -31,7 +31,7 @@ priority_score = (0.5 * damage_score) + (0.3 * sentiment_score) + (0.2 * claim_m
 ```json
 {
   "review_text": "The product arrived broken and unusable.",
-  "image_url": "https://example.com/damaged-item.jpg"
+  "image_url": "https://raw.githubusercontent.com/Saipavanavsp/multimodal-feedback-pipeline/master/assets/cracked-phone-sample.png"
 }
 ```
 
